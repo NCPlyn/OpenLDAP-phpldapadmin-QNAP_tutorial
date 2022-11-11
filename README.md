@@ -13,6 +13,26 @@
     - Move old database: **YES**
 
     `sudo systemctl restart slapd`
+    
+- If you want to use SSH keys:
+    - Create schema file
+     ```
+	cat << EOL >~/openssh-lpk.ldif
+	dn: cn=openssh-lpk,cn=schema,cn=config
+	objectClass: olcSchemaConfig
+	cn: openssh-lpk
+	olcAttributeTypes: ( 1.3.6.1.4.1.24552.500.1.1.1.13 NAME 'sshPublicKey'
+	  DESC 'MANDATORY: OpenSSH Public key'
+	  EQUALITY octetStringMatch
+	  SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )
+	olcObjectClasses: ( 1.3.6.1.4.1.24552.500.1.1.2.0 NAME 'ldapPublicKey' SUP top AUXILIARY
+	  DESC 'MANDATORY: OpenSSH LPK objectclass'
+	  MAY ( sshPublicKey $ uid )
+	  )
+	EOL
+    ```
+    - Add schema to OpenLDAP config\
+    `ldapadd -Y EXTERNAL -H ldapi:/// -f ~/openssh-lpk.ldif`
 - Test your LDAP configuration
     - (Replace with valid DCs of your domain)\
     ```ldapsearch -x -W -D cn=admin,dc=slapdserver,dc=organiz,dc=com -b dc=slapdserver,dc=organiz,dc=com -LLL```
@@ -41,9 +61,7 @@
 - The login form should be automaticaly filled, just enter you Administrator password
 - Create two new **Organisational Units** named "users" and "groups"
 - Create a new **Posix Group** item under "groups" OU named "users"
-- Create a new **User Account** item under "users" OU, fill out everything, use /bin/bash as login shell.
-  (If you want to have the user homes on remote NFS storage, make their home for example `/homenas/their-usrname`)
-  Make sure their UID doesn't match any existing UID on the client machines
+- Create a new **User Account** item under "users" OU, more details more down in "**How to add new user**"
 
 ## Client machine configuration for LDAP
 - Installation\
@@ -73,10 +91,24 @@
     - Create folder for the homes you specified while creating the User Account, ex.: `sudo mkdir /homenas`
     - `sudo nano /etc/fstab`
         - Add this to the end of your file with the right domain/IP of the server and folder, ex.: `nas.organiz.com:/servery /homenas nfs defaults 0 0`
+
+- If you want to use SSH keys:
+    ```
+    sudo apt install python3 python3-pip python3-ldap
+    sudo pip3 install ssh-ldap-pubkey
+    sh -c 'echo "AuthorizedKeysCommand /usr/local/bin/ssh-ldap-pubkey-wrapper\nAuthorizedKeysCommandUser nobody" >> /etc/ssh/sshd_config' && service ssh restart
+    ```
     
 - Reboot client machine
-- For QNAP NAS:
-    - Login into the account on the client machine (it will create it's homedir)
+
+## How to add new user
+- In phpLDAPadmin, create new child entry 'User account' under ou 'users'
+- Fill out the form, select /bin/bash as Login shell, (If you want to have the user homes on remote NFS storage, make their home is for example `/homenas/their-usrname`) (also, it will get autofilled once you enter some names). Make sure their UID doesn't match any existing UID on the client machines' and Create Object.
+- If using SSHKey:
+    - In the newly created user, go to 'objectClass' attribute section, click 'add value', choose the “ldapPublicKey” attribute and Update Object.
+    - Now in the user edit page, click 'Add new attribute' on the top part, choose 'sshPublicKey', paste their public key into the text area and Update Object.
+- Login into the account on any machine (it will create it's homedir). (User can change their password using 'passwd')
+- If using QNAP NAS as homedir:
     - Login into the QNAP and open the permissions tab for their folder in /servery
     - **Remove any group or user that isn't the user who created the folder or administrator**
 
