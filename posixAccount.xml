@@ -6,7 +6,7 @@
 <description>New User Account</description>
 <icon>ldap-user.png</icon>
 <invalid>0</invalid>
-<rdn>cn</rdn>
+<rdn>uid</rdn>
 <title>Generic: User Account</title>
 <visible>1</visible>
 
