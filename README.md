@@ -111,6 +111,12 @@
 - If using QNAP NAS as homedir:
     - Login into the QNAP and open the permissions tab for their folder in /servery
     - **Remove any group or user that isn't the user who created the folder or administrator**
+    - Do this for every existing server:
+       - With sudo account, move their data from /home folder on the server to the NAS `sudo cp -p -r /home/xxxx/* /homenas/xxxx/`
+       - Set the right permissions for their files with their LDAP uid `sudo chown -R ldapuserid:500 /homenas/xxxx/`
+- Optional: Copy the users crypted password from /etc/shadow (between the first two ":") and add "{CRYPT}" before it
+    - In phpldapadmin, in the users password parameter, select encrypting algorithm "crypt" and paste the encrypted password with "{CRYPT}" infront of it and "Update Object"
+- On every server, check if the LDAP user exists with `getent passwd`, then delete the converted user entry in `/etc/passwd` & `/etc/shadow` & `/etc/group` & their /home/xxxx folder, but you can keep it in case of backup
 
 ## QNAP NAS Configuration
 
