@@ -88,6 +88,7 @@
     - To make passwd work with ldap accounts, remove `use_authtok` in `/etc/pam.d/common-password`
 
     If you are going to use NFS remote storage for homes (make sure the nfs&ldap on NAS is done first before doing this):
+    - `sudo apt install nfs-common`
     - Create folder for the homes you specified while creating the User Account, ex.: `sudo mkdir /homenas`
     - `sudo nano /etc/fstab`
         - Add this to the end of your file with the right domain/IP of the server and folder, ex.: `nas.organiz.com:/servery /homenas nfs defaults 0 0`
